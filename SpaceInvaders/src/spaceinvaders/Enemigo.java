@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 
 public class Enemigo {
     private int x, y, velocidad, direccionX;
-    private int ancho = 30, alto = 30;
+    private int ancho = 50, alto = 50;
     private Random random = new Random();
     private int contadorPasos = 0;
     private Image imagenEnemigo;
