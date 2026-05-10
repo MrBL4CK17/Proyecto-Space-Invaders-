@@ -2,12 +2,14 @@ package spaceinvaders;
 
 import java.awt.*;
 import java.util.Random;
+import javax.swing.ImageIcon;
 
 public class Enemigo {
     private int x, y, velocidad, direccionX;
     private int ancho = 30, alto = 30;
     private Random random = new Random();
     private int contadorPasos = 0;
+    private Image imagenEnemigo;
 
     public Enemigo(int x, int y, int velocidad) {
         this.x = x;
@@ -15,7 +17,15 @@ public class Enemigo {
         this.velocidad = velocidad;
         // Dirección inicial aleatoria
         this.direccionX = random.nextBoolean() ? 1 : -1;
+        cargarImagen();
     }
+    
+    private void cargarImagen() {
+        // Carga la imagen desde la ruta de archivos del proyecto
+        ImageIcon ii = new ImageIcon(getClass().getResource("alien-magenta.png"));
+        this.imagenEnemigo = ii.getImage();
+    }
+    
 
     public void mover(int limiteAncho) {
         // Cambia de dirección horizontal ocasionalmente
@@ -43,11 +53,16 @@ public class Enemigo {
     }
 
     public void dibujar(Graphics g) {
-        g.setColor(Color.RED);
+        /*g.setColor(Color.RED);
         g.fillRect(x, y, ancho, alto);
         g.setColor(Color.WHITE);
         g.fillRect(x + 5, y + 5, 5, 5);
         g.fillRect(x + 20, y + 5, 5, 5);
+*/
+        if (imagenEnemigo != null) {
+            // Dibuja el PNG en las coordenadas x, y con el tamaño definido
+            g.drawImage(imagenEnemigo, x, y, ancho, alto, null);
+        }
     }
 
     public Rectangle getBounds() {
