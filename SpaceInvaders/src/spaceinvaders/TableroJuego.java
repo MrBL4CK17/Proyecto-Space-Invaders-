@@ -1,5 +1,4 @@
 package spaceinvaders;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -14,10 +13,9 @@ public class TableroJuego extends JPanel implements Runnable {
     private int nivel = 1, puntos = 0, velocidadEnemigos = 2;
     private List<Enemigo> enemigos;
     private Random rand = new Random();
-    
     // Nueva variable para la Nave
     private Nave nave;
-
+    private List<Proyectil> proyectiles = new ArrayList<>();
     public TableroJuego() {
         setBackground(Color.BLACK);
         setFocusable(true);
@@ -54,7 +52,7 @@ public class TableroJuego extends JPanel implements Runnable {
             try { Thread.sleep(50); } catch (InterruptedException e) {}
         }
         
-        // Ahora sí, inicializamos enemigos con seguridad
+        //  inicializamos enemigos con seguridad
         inicializarEnemigos();
 
         while (enJuego) {
@@ -64,36 +62,52 @@ public class TableroJuego extends JPanel implements Runnable {
         }
     }
 
-    private void actualizar() {
-        if (!enJuego || enemigos == null) return;
+private void actualizar() {
+    if (!enJuego || enemigos == null) return;
 
-        // Mover Nave
-        nave.mover(getWidth());
+    nave.mover(getWidth());
 
-        // Mover Enemigos y check Game Over
-        for (int i = 0; i < enemigos.size(); i++) {
-            Enemigo e = enemigos.get(i);
-            e.mover(getWidth());
-
-            // Límite de Game Over corregido (100px desde el fondo real)
-            if (e.getBounds().y > getHeight() - 100) {
-                finalizarJuego();
-                return;
-            }
-        }
-
-        // Simulación de puntos (eliminar cuando haya disparos)
-        if (!enemigos.isEmpty() && rand.nextInt(100) > 98) {
-            enemigos.remove(0);
-            puntos += 100 * nivel;
-        }
-
-        if (enemigos.isEmpty()) {
-            nivel++;
-            velocidadEnemigos++;
-            inicializarEnemigos();
+    // 1. Coordinar Proyectiles (Moverlos y limpiar los que se salen)
+    for (int i = 0; i < proyectiles.size(); i++) {
+        Proyectil p = proyectiles.get(i);
+        p.mover();
+        if (!p.estaVivo()) {
+            proyectiles.remove(i);
+            i--;
         }
     }
+
+    // 2. Coordinar Enemigos y Colisiones
+    for (int i = 0; i < enemigos.size(); i++) {
+        Enemigo e = enemigos.get(i);
+        e.mover(getWidth());
+
+        // Choque: Enemigo vs Nave (Game Over)
+        if (e.getBounds().intersects(nave.getBounds())) {
+            finalizarJuego();
+            return;
+        }
+
+        // Choque: Proyectil vs Enemigo
+        for (int j = 0; j < proyectiles.size(); j++) {
+            Proyectil p = proyectiles.get(j);
+            if (p.getBounds().intersects(e.getBounds())) {
+                enemigos.remove(i); // El alien muere
+                proyectiles.remove(j); // La bala desaparece
+                puntos += 100;
+                i--; // Reajustamos el índice de enemigos
+                break; 
+            }
+        }
+    }
+    
+    // Si no quedan enemigos, subes de nivel (esto ya lo tienes)
+    if (enemigos.isEmpty()) {
+        nivel++;
+        velocidadEnemigos++;
+        inicializarEnemigos();
+    }
+}
 
     private void finalizarJuego() {
         enJuego = false;
@@ -108,42 +122,74 @@ public class TableroJuego extends JPanel implements Runnable {
         });
     }
 
-    @Override
+@Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        // Suavizado de bordes
+        // 1. Configuración de gráficos 2D
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // 2. Dibujar Puntuación y Nivel
         g.setColor(Color.GREEN);
         g.setFont(new Font("Arial", Font.BOLD, 14));
         g.drawString("NIVEL: " + nivel + " | PUNTOS: " + puntos, 10, 20);
         
-        // Línea de peligro
+        // 3. Línea de peligro
         g.setColor(new Color(255, 0, 0, 80));
         g.drawLine(0, getHeight() - 100, getWidth(), getHeight() - 100);
 
-        // Dibujar Nave
-        if (nave != null) nave.dibujar(g);
+        // 4. Dibujar la Nave
+        if (nave != null) {
+            nave.dibujar(g);
 
-        // Dibujar Enemigos
+            // --- CÓDIGO DE LA MIRA (DENTRO DEL BLOQUE DE LA NAVE) ---
+            Rectangle naveBounds = nave.getBounds();
+            int xCentroNave = naveBounds.x + (naveBounds.width / 2);
+            int yMira = naveBounds.y - 100; 
+
+            g2d.setColor(Color.GREEN); 
+            g2d.setStroke(new BasicStroke(2)); 
+            g2d.drawOval(xCentroNave - 20, yMira - 20, 40, 40); // Círculo
+            g2d.drawLine(xCentroNave, yMira - 15, xCentroNave, yMira + 15); // Cruz vertical
+            g2d.drawLine(xCentroNave - 15, yMira, xCentroNave + 15, yMira); // Cruz horizontal
+        }
+
+        // 5. Dibujar los Proyectiles (Balas)
+        if (proyectiles != null) {
+            for (Proyectil p : proyectiles) {
+                p.dibujar(g);
+            }
+        }
+
+        // 6. Dibujar los Enemigos (Aliens)
         if (enemigos != null) {
-            for (Enemigo e : enemigos) e.dibujar(g);
+            for (Enemigo e : enemigos) {
+                e.dibujar(g);
+            }
         }
         
+        // Sincronización para evitar lag visual
         Toolkit.getDefaultToolkit().sync();
     }
 
+
     // Clase interna para gestionar el teclado
-    private class TAdapter extends KeyAdapter {
-        @Override
-        public void keyReleased(KeyEvent e) {
-            nave.keyReleased(e);
-        }
-        @Override
-        public void keyPressed(KeyEvent e) {
-            nave.keyPressed(e);
+private class TAdapter extends KeyAdapter {
+    @Override
+    public void keyPressed(KeyEvent e) {
+        nave.keyPressed(e);
+        // Si presiona espacio, disparamos
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            // El disparo sale de la mitad de la nave
+            int posX = nave.getBounds().x + (nave.getBounds().width / 2) - 3;
+            int posY = nave.getBounds().y;
+            proyectiles.add(new Proyectil(posX, posY));
         }
     }
+    @Override
+    public void keyReleased(KeyEvent e) {
+        nave.keyReleased(e);
+    }
+}
 }
