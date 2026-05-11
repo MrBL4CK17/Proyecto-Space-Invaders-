@@ -1,0 +1,34 @@
+package spaceinvaders;
+
+import java.awt.*;
+
+public class Proyectil {
+    private int x, y;
+    private final int VELOCIDAD = -10; // Va hacia arriba (y disminuye)
+    private final int ANCHO = 6, ALTO = 12;
+    private boolean vivo = true; // Para saber cuándo borrarlo de la lista
+
+    public Proyectil(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void mover() {
+        y += VELOCIDAD;
+        // Si se sale por arriba de la pantalla, "muere"
+        if (y < 0) vivo = false;
+    }
+
+    public void dibujar(Graphics g) {
+        g.setColor(Color.YELLOW);
+        g.fillOval(x, y, ANCHO, ALTO); // Dibujamos una elipse amarilla
+    }
+
+    public boolean estaVivo() { return vivo; }
+    public void setVivo(boolean vivo) { this.vivo = vivo; }
+
+    // Este método es CRUCIAL para detectar choques con enemigos
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, ANCHO, ALTO);
+    }
+}
