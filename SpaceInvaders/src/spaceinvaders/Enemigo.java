@@ -10,15 +10,28 @@ public class Enemigo {
     private Random random = new Random();
     private int contadorPasos = 0;
     private Image imagenEnemigo;
-
-    public Enemigo(int x, int y, int velocidad) {
+     private int vida;
+   private int vidaEnemigo;
+    
+   public Enemigo(int x, int y, int velocidad) {
         this.x = x;
         this.y = y;
-        this.velocidad = velocidad;
-        // Dirección inicial aleatoria
+        
+        // PASO A: Creatividad - Velocidades y Vida aleatoria
+        this.velocidad = velocidad + random.nextInt(3); 
+        this.vidaEnemigo = (random.nextInt(10) > 8) ? 2 : 1; // Unos aguantan más
+        
         this.direccionX = random.nextBoolean() ? 1 : -1;
         cargarImagen();
     }
+
+public void recibirDanio() {
+    this.vida--;
+}
+
+public int getVida() {
+    return vida;
+}
     
     private void cargarImagen() {
         // Carga la imagen desde la ruta de archivos del proyecto
@@ -27,15 +40,22 @@ public class Enemigo {
     }
     
 
-    public void mover(int limiteAncho) {
-        // Cambia de dirección horizontal ocasionalmente
-        if (contadorPasos % 50 == 0 && random.nextInt(10) > 7) {
+   public void mover(int limiteAncho) {
+        //  PASO CREATIVO (Integrado de imagen): El Teletransporte
+        // El 2% de probabilidad de que el enemigo se mueva rápido a un lado
+        if (random.nextInt(100) < 4) {
+            x += (random.nextBoolean() ? 30 : -20); // El pequeño salto lateral
+        }
+        
+
+        // PASO B: Cambio de dirección errático
+        if (contadorPasos % 60 == 0 && random.nextInt(10) > 7) {
             direccionX *= -1;
         }
         
         x += direccionX * velocidad;
 
-        // Rebote en los bordes laterales
+        // Rebote en los bordes
         if (x < 0) {
             x = 0;
             direccionX = 1;
@@ -44,8 +64,8 @@ public class Enemigo {
             direccionX = -1;
         }
         
-        // DESCENSO CORREGIDO: Solo baja muy de vez en cuando (probabilidad baja)
-        if (random.nextInt(1000) > 990) {
+        // PASO C: Descenso aleatorio
+        if (random.nextInt(1000) > 996) {
             y += 15;
         }
         
@@ -67,5 +87,10 @@ public class Enemigo {
 
     public Rectangle getBounds() {
         return new Rectangle(x, y, ancho, alto);
-    }
+       }
+        // Métodos para cuando agreguen los disparos
+    public int getVidaEnemigo() { return vidaEnemigo; }
+    public void restarVidaEnemigo() { vidaEnemigo--; }
 }
+    
+
