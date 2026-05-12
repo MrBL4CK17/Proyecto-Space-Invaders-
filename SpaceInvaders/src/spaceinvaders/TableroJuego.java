@@ -10,6 +10,7 @@ import java.util.Random;
 public class TableroJuego extends JPanel implements Runnable {
     private Thread hiloPrincipal;
     private boolean enJuego = true;
+    private int vidasJugador = 3;
     private int nivel = 1, puntos = 0, velocidadEnemigos = 2;
     private List<Enemigo> enemigos;
     private Random rand = new Random();
@@ -48,12 +49,17 @@ public class TableroJuego extends JPanel implements Runnable {
     }
 
     private void inicializarEnemigos() {
-        enemigos = new ArrayList<>();
+        if (enemigos != null) {
+            enemigos.clear();
+        } else {
+            enemigos = new ArrayList<>();
+        }
+        
         int cantidad = 3 + nivel; 
         for (int i = 0; i < cantidad; i++) {
-            // Spawn seguro en la parte superior
-            int xAleatoria = rand.nextInt(700);
-            int yAleatoria = rand.nextInt(100) + 50; 
+            // Organización aleatoria en el tercio superior del tablero
+            int xAleatoria = rand.nextInt(Math.max(1, getWidth() - 60));
+            int yAleatoria = rand.nextInt(150) + 50; 
             enemigos.add(new Enemigo(xAleatoria, yAleatoria, velocidadEnemigos));
         }
     }
@@ -91,16 +97,24 @@ private void actualizar() {
         }
     }
 
-    // 2. Coordinar Enemigos y Colisiones
-    for (int i = 0; i < enemigos.size(); i++) {
-        Enemigo e = enemigos.get(i);
-        e.mover(getWidth());
+   // --- COORDINAR ENEMIGOS Y VIDAS ---
+        for (int i = 0; i < enemigos.size(); i++) {
+            Enemigo e = enemigos.get(i);
+            e.mover(getWidth());
 
-        // Choque: Enemigo vs Nave (Game Over)
-        if (e.getBounds().intersects(nave.getBounds())) {
-            finalizarJuego();
-            return;
-        }
+            // 1. Choque Directo o Línea de Peligro
+            if (e.getBounds().intersects(nave.getBounds()) || e.getBounds().y > getHeight() - 100) {
+                vidasJugador--; // Restamos una vida
+                
+                if (vidasJugador <= 0) {
+                    finalizarJuego();
+                    return;
+                } else {
+                    // Si quedan vidas, reiniciamos la posición de los aliens
+                    inicializarEnemigos(); 
+                    return; 
+                }
+            }
 
         // Choque: Proyectil vs Enemigo
         for (int j = 0; j < proyectiles.size(); j++) {
@@ -115,6 +129,7 @@ private void actualizar() {
         }
     }
     
+
     // Si no quedan enemigos, subes de nivel (esto ya lo tienes)
     if (enemigos.isEmpty()) {
         nivel++;
@@ -143,6 +158,13 @@ private void actualizar() {
         // 1. Configuración de gráficos 2D
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+// --- DIBUJAR UI CON VIDAS ---
+        g.setColor(Color.GREEN);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+        
+        g.setColor(Color.WHITE);
+        g.drawString("VIDAS: " + vidasJugador, 10, 40); // Texto de vidas
 
          // 2. DIBUJAR EL FONDO 
     if (imagenFondo != null) {
