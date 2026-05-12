@@ -15,10 +15,24 @@ public class TableroJuego extends JPanel implements Runnable {
     private Random rand = new Random();
     // Nueva variable para la Nave
     private Nave nave;
+
+     private Image imagenFondo;
+    //NUEVA VARIABLE PARA LA FUENTE QUE VIENE EN LA CLASE PRINCIPAL
+    private Font fuentePixel;
+    
     private List<Proyectil> proyectiles = new ArrayList<>();
     public TableroJuego() {
         setBackground(Color.BLACK);
         setFocusable(true);
+
+        //CARGAR EL FONDO
+        try{
+            // Asegúrate de que el nombre del archivo coincida (ejemplo: fondo.png)
+        ImageIcon iconoFondo = new ImageIcon(getClass().getResource("fondo.jpg"));
+        imagenFondo = iconoFondo.getImage();
+    } catch (Exception e) {
+        System.out.println("No se pudo cargar el fondo, se usará color negro.");
+    }
         
         // CORRECCIÓN DEFINITIVA GAME OVER: Inicializamos la nave AHORA, 
         // pero esperaremos a que el panel sea visible para inicializar enemigos.
@@ -128,21 +142,38 @@ private void actualizar() {
         
         // 1. Configuración de gráficos 2D
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        // 2. Dibujar Puntuación y Nivel
+         // 2. DIBUJAR EL FONDO 
+    if (imagenFondo != null) {
+        // Esto estira la imagen para que ocupe toda la ventana
+        g2d.drawImage(imagenFondo, 0, 0, getWidth(), getHeight(), null);
+    }
+
+        // 3.INICIA A  USAR LA FUENTE PIXEL EN EL JUEGO
+        if (fuentePixel != null) {
+            g2d.setFont(fuentePixel.deriveFont(25f)); // Tamaño 18 para el marcador
+        } else {
+            g2d.setFont(new Font("Monospaced", Font.BOLD, 18)); // Respaldo
+        }
+        
+        // 4. Dibujar Puntuación y Nivel
         g.setColor(Color.GREEN);
         g.setFont(new Font("Arial", Font.BOLD, 14));
         g.drawString("NIVEL: " + nivel + " | PUNTOS: " + puntos, 10, 20);
         
-        // 3. Línea de peligro
+        // 5. Línea de peligro
         g.setColor(new Color(255, 0, 0, 80));
         g.drawLine(0, getHeight() - 100, getWidth(), getHeight() - 100);
 
-        // 4. Dibujar la Nave
+        // 6. Dibujar la Nave
         if (nave != null) {
             nave.dibujar(g);
 
+     // 7. Dibujar Enemigos
+        if (enemigos != null) {
+            for (Enemigo e : enemigos) e.dibujar(g);
+        }
             // --- CÓDIGO DE LA MIRA (DENTRO DEL BLOQUE DE LA NAVE) ---
             Rectangle naveBounds = nave.getBounds();
             int xCentroNave = naveBounds.x + (naveBounds.width / 2);
@@ -155,14 +186,14 @@ private void actualizar() {
             g2d.drawLine(xCentroNave - 15, yMira, xCentroNave + 15, yMira); // Cruz horizontal
         }
 
-        // 5. Dibujar los Proyectiles (Balas)
+        // 8. Dibujar los Proyectiles (Balas)
         if (proyectiles != null) {
             for (Proyectil p : proyectiles) {
                 p.dibujar(g);
             }
         }
 
-        // 6. Dibujar los Enemigos (Aliens)
+        // 9. Dibujar los Enemigos (Aliens)
         if (enemigos != null) {
             for (Enemigo e : enemigos) {
                 e.dibujar(g);
